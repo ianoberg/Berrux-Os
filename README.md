@@ -1,3 +1,4 @@
+<p align="center"><img src="logo/berrux-logo.svg" width="300" alt="Berrux"></p>
 # Berrux
 
 A lightweight Linux for the Raspberry Pi 5, built with Buildroot.
