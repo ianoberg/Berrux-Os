@@ -1,2 +1,3 @@
 NAME=Berrux
-TARGET=Raspberry Pi 5
+AUTHORS=Ian, with help from Mischa
+TARGET=generic
