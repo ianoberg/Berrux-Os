@@ -1,0 +1,10 @@
+[Desktop Entry]
+Type=Application
+Version=1.0
+Name=Welcome to Berrux
+Comment=What this system is, and who made it
+Exec=qterminal -e berrux-info
+Icon=help-about
+Terminal=false
+Categories=System;
+Keywords=berrux;about;welcome;info;

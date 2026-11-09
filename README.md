@@ -14,11 +14,23 @@ redraw in that style.
 
 ## What this is
 
-Berrux is **not** a Debian/Ubuntu/Arch derivative. It is a
+The tree in this repository is **not** a Debian/Ubuntu/Arch derivative. It is a
 [Buildroot](https://buildroot.org) external tree: Buildroot compiles the kernel,
 C library, BusyBox and the packages you pick into one image. Nothing here is
 tied to a single board — the board-specific parts live entirely in the defconfig
 under `configs/`.
+
+## Two editions
+
+| Edition | Base | Size | For |
+|---|---|---|---|
+| **Berrux Micro** — `configs/`, `board/`, `package/` | Buildroot, built from source | ~50 MB | boards, tinkering, no desktop |
+| **Berrux desktop** — `debian/` | Debian 13 (trixie) + LXQt | ~3 GB | people who want a working desktop |
+
+The desktop edition exists because Buildroot has no LXQt packages at all, so
+LXQt on Buildroot would mean maintaining dozens of recipes forever. It is
+derivative work by design and says so. The rest of this README describes
+Berrux Micro; see [`debian/README.md`](debian/README.md) for the other one.
 
 This repository is the Berrux *layer*; Buildroot itself is the tool that builds
 it. Nothing in it is prebuilt, so you build the image on your own machine.
@@ -32,6 +44,7 @@ it. Nothing in it is prebuilt, so you build the image on your own machine.
 | `board/berrux/overlay/` | Files copied into the image (`/etc/motd`, `/etc/berrux-release`) |
 | `board/berrux/post-build.sh` | Stamps the image with arch and build date |
 | `package/Config.in`, `package/*/*.mk` | Berrux's own packages, added here |
+| `debian/` | The Debian + LXQt desktop edition (separate from the tree above) |
 
 ## Try it with no hardware at all
 

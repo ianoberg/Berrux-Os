@@ -1,0 +1,29 @@
+#!/bin/sh
+#
+# Runs inside the chroot after packages are installed, before the image is
+# assembled. Keep it idempotent: a rebuild must not pile up changes.
+#
+set -e
+
+# Add Berrux keys next to Debian's own, rather than replacing /etc/os-release.
+# Anything that reads VERSION_ID or ID keeps working.
+if [ -r /etc/os-release ] && ! grep -q '^BERRUX_NAME=' /etc/os-release; then
+	cat >> /etc/os-release <<'EOF'
+BERRUX_NAME="Berrux"
+BERRUX_VERSION="0.1-dev"
+BERRUX_EDITION="desktop"
+EOF
+fi
+
+# Overlay files keep their permissions from the build machine, but be explicit
+# so a checkout with odd umasks still produces a runnable script.
+chmod 0755 /usr/local/bin/berrux-info
+
+# Wi-Fi has to work on first boot or a beginner is stuck at a black screen.
+systemctl enable NetworkManager.service >/dev/null 2>&1 || true
+
+# Make sure the name resolves locally; some tools get slow or noisy without it.
+printf 'berrux\n' > /etc/hostname
+if [ -r /etc/hosts ] && ! grep -q '^127\.0\.1\.1' /etc/hosts; then
+	echo '127.0.1.1 berrux' >> /etc/hosts
+fi

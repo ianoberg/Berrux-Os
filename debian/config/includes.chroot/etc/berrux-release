@@ -1,0 +1,5 @@
+NAME="Berrux"
+VERSION="0.1-dev"
+EDITION="desktop"
+BASE="Debian 13 (trixie) with LXQt 2.1"
+AUTHORS="Ian, with help from Mischa"
