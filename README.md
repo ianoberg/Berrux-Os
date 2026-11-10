@@ -3,9 +3,10 @@
 
 **Made by Ian, with help from Mischa.**
 
-A small Linux you can build for almost any board — a Raspberry Pi, a mini PC,
-an ARM or RISC-V board, or plain old QEMU — using
-[Buildroot](https://buildroot.org).
+A lightweight Linux for the Raspberry Pi 5, built with
+[Buildroot](https://buildroot.org). Nothing is wired to one board, though: the
+board-specific parts live in the defconfig under `configs/`, and a generic QEMU
+defconfig is included as a starting point for other hardware.
 
 Work in progress. Not affiliated with or endorsed by Raspberry Pi Ltd.
 
@@ -121,16 +122,18 @@ the card, so get `/dev/sdX` right — or open the `.img` in Raspberry Pi Imager.
 
 Things that will bite you if you change them:
 
-- **The kernel is the Raspberry Pi 6.6 branch with its `bcm2712_defconfig`.** A
-  Pi 5's SD card, USB and Ethernet are all behind the RP1 southbridge, which
-  mainline 6.1 cannot drive and mainline 6.6 still does not drive either. A
-  mainline kernel here boots to a console that cannot mount the root filesystem
-  it is sitting next to. Do not "simplify" this back to
+- **The kernel is the Raspberry Pi tree at a pinned commit, with its
+  `bcm2712_defconfig`.** A Pi 5's SD card, USB and Ethernet are all behind the
+  RP1 southbridge, which mainline 6.1 cannot drive and mainline 6.6 still does
+  not drive either. A mainline kernel here boots to a console that cannot mount
+  the root filesystem it is sitting next to. Do not "simplify" this back to
   `BR2_LINUX_KERNEL_CUSTOM_VERSION`.
-- **The kernel is pinned to a branch, not a commit**, so rebuilds pick up the
-  newest 6.6 fixes but are not byte-for-byte reproducible. Replace the URL in
-  `BR2_LINUX_KERNEL_CUSTOM_TARBALL_LOCATION` with a commit tarball if you need
-  that.
+- **`bcm2712_defconfig` builds a 16K page kernel**, which not every toolchain
+  can link. `board/berrux/pi5/linux-4k-page-size.fragment` switches it to 4K.
+- **Everything the defconfig needs is in this repository.** It deliberately does
+  not use Buildroot's `board/raspberrypi5/` files: those only exist in Buildroot
+  master, so an external tree pointing at them fails on the pinned release.
+- **The kernel is pinned to a commit**, so rebuilds are reproducible.
 - **The console is `ttyAMA10`**, the Pi 5's debug UART, not the `ttyAMA0` of
   earlier models.
 - **There is no `start.elf` or `fixup.dat` on the boot partition.** A Pi 5 keeps
