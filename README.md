@@ -41,8 +41,10 @@ it. Nothing in it is prebuilt, so you build the image on your own machine.
 |---|---|
 | `external.desc`, `external.mk`, `Config.in` | Register this tree with Buildroot |
 | `configs/berrux_generic_aarch64_defconfig` | Board-agnostic starting point (QEMU) |
+| `configs/berrux_pi5_defconfig` | Raspberry Pi 5, produces a bootable SD card image |
 | `board/berrux/overlay/` | Files copied into the image (`/etc/motd`, `/etc/berrux-release`) |
-| `board/berrux/post-build.sh` | Stamps the image with arch and build date |
+| `board/berrux/pi5/` | Pi 5 boot files, SD card layout, post-image script |
+| `board/berrux/post-build.sh` | Stamps the image with target, arch and build date |
 | `package/Config.in`, `package/*/*.mk` | Berrux's own packages, added here |
 | `debian/` | The Debian + LXQt desktop edition (separate from the tree above) |
 
@@ -87,9 +89,9 @@ Copy `configs/berrux_generic_aarch64_defconfig` and change the hardware parts:
 - **x86 / UEFI machine:** use `BR2_x86_64=y` and
   `BR2_LINUX_KERNEL_DEFCONFIG="x86_64"`.
 - **RISC-V:** `BR2_riscv=y`, `BR2_RISCV_64=y`.
-- **Raspberry Pi 5 specifically:** the kernel must be 6.6 or newer, so bump
-  `BR2_LINUX_KERNEL_CUSTOM_VERSION_VALUE` and use
-  `BR2_LINUX_KERNEL_INTREE_DTS_NAME="broadcom/bcm2712-rpi-5-b"`.
+- **Raspberry Pi 5:** use `configs/berrux_pi5_defconfig` as-is instead. It is
+  not a copy of the generic one with a different device tree — see the section
+  below for why the kernel changes too.
 
 The easiest route for a new board is to start from Buildroot's own defconfig
 for that board (`make list-defconfigs`) and then add these two lines, which are
@@ -102,6 +104,39 @@ BR2_ROOTFS_OVERLAY="$(BR2_EXTERNAL_BERRUX_PATH)/board/berrux/overlay"
 
 Root filesystem choice (ext2/ext4, squashfs, initramfs, UBI, …) is free — the
 overlay and post-build script work regardless.
+
+## Build a bootable Raspberry Pi 5 SD card
+
+```sh
+export BR2_EXTERNAL=/path/to/Berrux-Os
+make berrux_pi5_defconfig
+make -j"$(nproc)"
+```
+
+This writes `output/images/berrux-pi5.img`: a two-partition SD card image with
+a 64 MB FAT boot partition (`config.txt`, `cmdline.txt`, the kernel, the Pi 5
+device tree) and an ext4 root partition. Put it on a card with
+`dd if=output/images/berrux-pi5.img of=/dev/sdX bs=4M conv=fsync` — that erases
+the card, so get `/dev/sdX` right — or open the `.img` in Raspberry Pi Imager.
+
+Things that will bite you if you change them:
+
+- **The kernel is the Raspberry Pi 6.6 branch with its `bcm2712_defconfig`.** A
+  Pi 5's SD card, USB and Ethernet are all behind the RP1 southbridge, which
+  mainline 6.1 cannot drive and mainline 6.6 still does not drive either. A
+  mainline kernel here boots to a console that cannot mount the root filesystem
+  it is sitting next to. Do not "simplify" this back to
+  `BR2_LINUX_KERNEL_CUSTOM_VERSION`.
+- **The kernel is pinned to a branch, not a commit**, so rebuilds pick up the
+  newest 6.6 fixes but are not byte-for-byte reproducible. Replace the URL in
+  `BR2_LINUX_KERNEL_CUSTOM_TARBALL_LOCATION` with a commit tarball if you need
+  that.
+- **The console is `ttyAMA10`**, the Pi 5's debug UART, not the `ttyAMA0` of
+  earlier models.
+- **There is no `start.elf` or `fixup.dat` on the boot partition.** A Pi 5 keeps
+  its bootloader in EEPROM, so it reads `config.txt` and the kernel directly.
+- No device-tree overlays ship in this image yet, so `dtoverlay=` lines in
+  `config.txt` will not resolve.
 
 ## Adding packages
 

@@ -1,0 +1,18 @@
+# Berrux boot config for the Raspberry Pi 5.
+#
+# A Pi 5 keeps its bootloader in EEPROM, so the FAT boot partition only needs
+# config.txt, cmdline.txt, the kernel and the device tree. There is no
+# start.elf/fixup.dat to ship, unlike earlier models.
+
+arm_64bit=1
+kernel=Image
+
+# The kernel is mainline-style: it is given the device tree explicitly rather
+# than having the firmware patch one for it.
+device_tree=bcm2712-rpi-5-b.dtb
+
+# Serial console on the debug UART, which the Pi 5 exposes as ttyAMA10.
+enable_uart=1
+
+# Run as fast as the board allows.
+arm_boost=1
