@@ -34,6 +34,7 @@ overlay and scripts.
 | `board/berrux/overlay/` | Files copied into the image (`/etc/motd`, `/etc/berrux-release`) |
 | `board/berrux/pi5/` | Pi 5 boot files (`config.txt`, `cmdline.txt`), SD card layout, kernel fragment, post-image script |
 | `board/berrux/post-build.sh` | Stamps the image with target, arch and build date |
+| `build.sh` | One-command build: fetches Buildroot, applies a defconfig, builds |
 | `package/Config.in`, `package/*/*.mk` | Berrux's own packages, added here |
 
 ## Build the Raspberry Pi 5 image
@@ -41,6 +42,18 @@ overlay and scripts.
 You need a Linux machine, about 10 GB free, 20–40 minutes, and Buildroot's usual
 build dependencies (`build-essential`, `bison`, `flex`, `rsync`, `bc`, `cpio`,
 `unzip`, `file`, `wget`, `perl`).
+
+If you just want the image, there is a script that does the download and the
+defconfig for you:
+
+```sh
+./build.sh          # Raspberry Pi 5
+./build.sh generic  # QEMU virt, no hardware needed
+```
+
+It fetches Buildroot 2024.02.11 into `buildroot/` the first time (git ignores
+that directory) and prints where the image ended up. The manual steps, if you
+want to drive the build yourself:
 
 ```sh
 wget https://buildroot.org/downloads/buildroot-2024.02.11.tar.gz
@@ -54,7 +67,11 @@ make -j"$(nproc)"
 
 That writes `output/images/berrux-pi5.img`: a two-partition SD card image with a
 64 MB FAT boot partition (`config.txt`, `cmdline.txt`, the kernel, the Pi 5
-device tree) and a 120 MB ext4 root partition.
+device trees) and a 120 MB ext4 root partition.
+
+The root filesystem is labelled `berrux-root`, and `cmdline.txt` asks for it by
+label instead of by device name, so the same image boots from an SD card or a
+USB drive.
 
 Put it on a card with Raspberry Pi Imager, or:
 
@@ -84,10 +101,35 @@ the debug UART, or plug in HDMI. Log in as `root` (no password by default), and
   master, so an external tree pointing at them fails on the pinned release.
 - **The console is `ttyAMA10`**, the Pi 5's debug UART, not the `ttyAMA0` of
   earlier models.
+- **Root is found by its `berrux-root` label**, not by `/dev/mmcblk0p2`. That is
+  what lets one image boot from SD or USB; pinning it to a device name works on
+  SD only.
+- **All three Pi 5 device trees are shipped** (`bcm2712-rpi-5-b`,
+  `bcm2712d0-rpi-5-b`, `bcm2712-rpi-500`). Recent Pi 5 boards use the D0
+  stepping and need the second one.
 - **There is no `start.elf` or `fixup.dat` on the boot partition.** A Pi 5 keeps
   its bootloader in EEPROM, so it reads `config.txt` and the kernel directly.
 - No device-tree overlays ship in this image yet, so `dtoverlay=` lines in
   `config.txt` will not resolve.
+
+## If it will not boot
+
+- **Nothing on serial and nothing on HDMI.** Look at the boot partition. It
+  should hold `config.txt`, `cmdline.txt`, `Image` and the `.dtb` files; if only
+  the first two are there, the card was written from a stale or partial image.
+- **Serial output stops right after `Starting kernel ...`.** The device tree does
+  not match the board revision. All three are on the boot partition, so change
+  the `device_tree=` line in `config.txt` to `bcm2712d0-rpi-5-b.dtb` (newer D0
+  stepping boards) or `bcm2712-rpi-500.dtb` (Pi 500).
+- **`VFS: Cannot open root device "LABEL=berrux-root"`.** The kernel booted but
+  cannot see the card it booted from, which on a Pi 5 means the RP1 drivers are
+  missing - see the kernel notes above. It is not a labelling or partitioning
+  problem.
+- **It boots and then asks for a password.** Root has none by default; press
+  Enter.
+- **`make` stops on a `board/raspberrypi5/...` file that does not exist.** That
+  defconfig still points at Buildroot master files; the ones in this repository
+  are self-contained, so use them.
 
 ## Try it with no hardware at all
 

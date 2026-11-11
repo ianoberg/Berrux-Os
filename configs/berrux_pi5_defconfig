@@ -56,6 +56,9 @@ BR2_PACKAGE_RPI_FIRMWARE_CMDLINE_FILE="$(BR2_EXTERNAL_BERRUX_PATH)/board/berrux/
 BR2_TARGET_ROOTFS_EXT2=y
 BR2_TARGET_ROOTFS_EXT2_4=y
 BR2_TARGET_ROOTFS_EXT2_SIZE="120M"
+# The kernel finds the root filesystem by this label, not by device name, so the
+# same image boots from an SD card or from a USB drive.
+BR2_TARGET_ROOTFS_EXT2_LABEL="berrux-root"
 # BR2_TARGET_ROOTFS_TAR is not set
 
 # SD card image

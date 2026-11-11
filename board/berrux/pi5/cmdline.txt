@@ -1,1 +1,1 @@
-console=ttyAMA10,115200 root=/dev/mmcblk0p2 rootwait rw
+console=ttyAMA10,115200 root=LABEL=berrux-root rootwait rw
