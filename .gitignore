@@ -1,4 +1,6 @@
 output/
 dl/
+buildroot/
 *.img
 *.iso
+*.zip

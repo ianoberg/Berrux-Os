@@ -1,0 +1,3 @@
+# bcm2712_defconfig builds a 16K page kernel. Some toolchains cannot link that,
+# and Buildroot upstream ships this same fragment for the same reason.
+CONFIG_ARM64_4K_PAGES=y
